@@ -1,0 +1,15 @@
+{
+  "workspaceFolder": "/usr/src",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "app",
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "extensions": [
+    "editorconfig.editorconfig",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "octref.vetur"
+  ]
+}

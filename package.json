@@ -1,0 +1,25 @@
+{
+  "name": "monitoring-client",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "serve": "npm run build && vue serve example/App.vue -p 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fuuga000/monitoring-client"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@vue/cli": "^4.5.15",
+    "@vue/cli-service-global": "^4.5.15",
+    "typescript": "^4.4.4"
+  }
+}

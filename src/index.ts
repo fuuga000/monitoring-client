@@ -125,7 +125,6 @@ export default class MonitoringClient {
     if (!this.pc) return
     this.pc.close()
     this.pc = undefined
-    console.log(`${this.type}: close`)
   }
 
   waitStatusComplete(pc: RTCPeerConnection): Promise<void> {

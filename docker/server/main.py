@@ -71,7 +71,6 @@ async def websocket_endpoint(ws: WebSocket):
                             "body": { "description": answer }
                         }
                     )
-                await send_cameras()
             elif action == "request-connecting-cameras":
                 await send_cameras()
 

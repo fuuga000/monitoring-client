@@ -7,10 +7,12 @@ export default class MonitoringClient {
   socket: CustomWebSocket
   stream?: MediaStream
   cameras: Camera[] = []
+  rtcConfig: object = {}
   constraints: object = { audio: false, video: true }
 
-  constructor(websocket_url: string, type: MonitoringType, constraints: object = {}) {
+  constructor(websocket_url: string, type: MonitoringType, rtcConfig: object = {}, constraints: object = {}) {
     this.type = type
+    Object.assign(this.rtcConfig, rtcConfig)
     Object.assign(this.constraints, constraints)
 
     this.socket = new CustomWebSocket(websocket_url)

@@ -35,8 +35,8 @@ export default class MonitoringClient {
       }
     }
     const stream = await navigator.mediaDevices.getUserMedia(this.constraints)
-    // const tracks = stream.getTracks()
-    // tracks.forEach((track) => this.pc?.addTrack(track, stream))
+    const tracks = stream.getTracks()
+    tracks.forEach((track) => this.pc?.addTrack(track, stream))
     this.stream = stream
     this.onSetStream(stream)
 

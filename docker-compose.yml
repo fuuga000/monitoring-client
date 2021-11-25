@@ -15,7 +15,11 @@ services:
     tty: true
     ports:
       - 8805:8000
-    command: uvicorn main:app --port 8000 --host 0.0.0.0
+    command: uvicorn main:app --port 8000 --host 0.0.0.0 --reload
+    volumes:
+      - ./docker/server/:/usr/src
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
 
 volumes:
   node-modules-volume:

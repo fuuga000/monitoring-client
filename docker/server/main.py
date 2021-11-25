@@ -52,6 +52,7 @@ class MonitoringtEndpoint(WebSocketEndpoint):
                 "body": { "id": key }
             }
         )
+        await self.send_cameras()
 
     async def on_receive(self, ws: WebSocket, data: Any) -> None:
         try:
@@ -80,7 +81,6 @@ class MonitoringtEndpoint(WebSocketEndpoint):
         elif message.action == "offer":
             offer = body.description
             self.clients[body.id].set_offer(offer)
-            await self.send_cameras()
         elif message.action == "answer":
             answer = body.description
             client = self.clients[body.target]
@@ -97,6 +97,7 @@ class MonitoringtEndpoint(WebSocketEndpoint):
     async def on_disconnect(self, ws: WebSocket, close_code: int) -> None:
         key = ws.headers.get('sec-websocket-key')
         del self.clients[key]
+        await self.send_cameras()
 
     async def send_cameras(self) -> None:
         cameras = []

@@ -1,5 +1,9 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.endpoints import WebSocketEndpoint
+from typing import Any
+from schemas import Message
+from pydantic import ValidationError
 
 
 app = FastAPI()
@@ -29,79 +33,86 @@ class WebSocketClient():
     def set_state(self, state: str):
         self.state = state
 
-clients = {}
 
-@app.websocket("/monitoring")
-async def websocket_endpoint(ws: WebSocket):
-    await ws.accept()
-    key = ws.headers.get('sec-websocket-key')
-    client = WebSocketClient(key, ws)
-    clients[key] = client
+@app.websocket_route("/monitoring")
+class MonitoringtEndpoint(WebSocketEndpoint):
+    encoding = 'json'
+    clients = {}
 
-    # IDを通知
-    await ws.send_json(
-      {
-        "action": "setting-self-id",
-        "body": { "id": key }
-      }
-    )
+    async def on_connect(self, ws: WebSocket) -> None:
+        await ws.accept()
+        key = ws.headers.get('sec-websocket-key')
+        client = WebSocketClient(key, ws)
+        self.clients[key] = client
 
-    try:
-        while True:
-            res = await ws.receive_json()
-            action = res.get("action")
-            body = res.get("body")
-            if action == "set-type":
-                type = body.get("type")
-                clients[body.get("id")].set_type(type)
-            elif action == "set-state":
-                state = body.get("state")
-                clients[body.get("id")].set_state(state)
-            elif action == "offer":
-                offer = body.get("description")
-                clients[body.get("id")].set_offer(offer)
-                await send_cameras()
-            elif action == "answer":
-                answer = body.get("description")
-                client = clients[body.get("target")]
-                if client:
-                    await client.socket.send_json(
-                        {
-                            "action": "answer",
-                            "body": { "description": answer }
-                        }
-                    )
-            elif action == "request-connecting-cameras":
-                await send_cameras()
+        # IDを通知
+        await ws.send_json(
+            {
+                "action": "setting-self-id",
+                "body": { "id": key }
+            }
+        )
 
-    except Exception:
-        await ws.close()
-        del clients[key]
-        for client in clients.values():
+    async def on_receive(self, ws: WebSocket, data: Any) -> None:
+        try:
+            message = Message(**data)
+        except ValidationError as e:
+            await ws.send_json(
+                {
+                    "action": "validation-error",
+                    "body": {
+                        "message": "not match format",
+                        "detail": str(e),
+                    }
+                }
+            )
+            return
+        except Exception as e:
+            print(e)
+            await ws.close()
+            return
+
+        body = message.body
+        if message.action == "set-type":
+            self.clients[body.id].set_type(body.type)
+        elif message.action == "set-state":
+            self.clients[body.id].set_state(body.state)
+        elif message.action == "offer":
+            offer = body.description
+            self.clients[body.id].set_offer(offer)
+            await self.send_cameras()
+        elif message.action == "answer":
+            answer = body.description
+            client = self.clients[body.target]
+            if client:
+                await client.socket.send_json(
+                    {
+                        "action": "answer",
+                        "body": { "description": answer }
+                    }
+                )
+        elif message.action == "request-connecting-cameras":
+            await self.send_cameras()
+
+    async def on_disconnect(self, ws: WebSocket, close_code: int) -> None:
+        key = ws.headers.get('sec-websocket-key')
+        del self.clients[key]
+
+    async def send_cameras(self) -> None:
+        cameras = []
+        for client in self.clients.values():
+            if client.type == "camera":
+                cameras.append(
+                    {
+                        "id": client.id,
+                        "offer": client.offer,
+                    }
+                )
+        for client in self.clients.values():
             if client.type == "monitor":
-                await send_cameras()
-
-
-async def send_cameras() -> None:
-    cameras = []
-    for client in clients.values():
-        if client.type == "camera":
-            cameras.append(
-                {
-                    "id": client.id,
-                    "offer": client.offer,
-                }
-            )
-    for client in clients.values():
-        if client.type == "monitor":
-            await client.socket.send_json(
-                {
-                    "action": "connecting-cameras",
-                    "body": { "cameras": cameras }
-                }
-            )
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    for client in clients.values():
-      client.socket.close()
+                await client.socket.send_json(
+                    {
+                        "action": "connecting-cameras",
+                        "body": { "cameras": cameras }
+                    }
+                )

@@ -7,9 +7,11 @@ export default class MonitoringClient {
   socket: CustomWebSocket
   stream?: MediaStream
   cameras: Camera[] = []
+  constraints: object = { audio: false, video: true }
 
-  constructor(websocket_url: string, type: MonitoringType) {
+  constructor(websocket_url: string, type: MonitoringType, constraints: object = {}) {
     this.type = type
+    Object.assign(this.constraints, constraints)
 
     this.socket = new CustomWebSocket(websocket_url)
     // typeに応じてメッセージ受け取り処理を振り分ける
@@ -25,13 +27,14 @@ export default class MonitoringClient {
   async cameraStart() {
     this.pc = new RTCPeerConnection()
     this.pc.onconnectionstatechange = () => {
-      if (this.pc?.connectionState === "closed") {
+      const status = this.pc?.connectionState
+      const failStatuses = ['disconnected', 'closed', 'failed']
+      if (failStatuses.some((s) => s === status)) {
         this.closeConnection()
         this.cameraStart()
       }
     }
-    const options = { audio: false, video: true }
-    const stream = await navigator.mediaDevices.getUserMedia(options)
+    const stream = await navigator.mediaDevices.getUserMedia(this.constraints)
     const tracks = stream.getTracks()
     tracks.forEach((track) => this.pc?.addTrack(track, stream))
     this.stream = stream

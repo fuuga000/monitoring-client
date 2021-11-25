@@ -30,6 +30,7 @@ export default class MonitoringClient {
     this.pc = new RTCPeerConnection(this.rtcConfig)
     this.pc.onconnectionstatechange = () => {
       const status = this.pc?.connectionState
+      console.log(`${this.type}: ${status}`)
       const failStatuses = ['disconnected', 'closed', 'failed']
       if (failStatuses.some((s) => s === status)) {
         this.closeConnection()
@@ -104,6 +105,10 @@ export default class MonitoringClient {
     if (!camera) return
 
     this.pc = new RTCPeerConnection()
+    this.pc.onconnectionstatechange = () => {
+      const status = this.pc?.connectionState
+      console.log(`${this.type}: ${status}`)
+    }
     this.pc.ontrack = (e) => {
       this.stream = e.streams[0]
       this.onSetStream(e.streams[0])

@@ -25,9 +25,7 @@ export default class MonitoringClient {
   async cameraStart() {
     this.pc = new RTCPeerConnection()
     this.pc.onconnectionstatechange = () => {
-      const status = this.pc?.connectionState
-      const failStatuses = ['disconnected', 'closed', 'failed']
-      if (failStatuses.some((s) => s === status)) {
+      if (this.pc?.connectionState === "closed") {
         this.closeConnection()
         this.cameraStart()
       }

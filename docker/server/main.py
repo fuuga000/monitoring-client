@@ -81,6 +81,7 @@ class MonitoringtEndpoint(WebSocketEndpoint):
         elif message.action == "offer":
             offer = body.description
             self.clients[body.id].set_offer(offer)
+            await self.send_cameras()
         elif message.action == "answer":
             answer = body.description
             client = self.clients[body.target]
@@ -102,7 +103,7 @@ class MonitoringtEndpoint(WebSocketEndpoint):
     async def send_cameras(self) -> None:
         cameras = []
         for client in self.clients.values():
-            if client.type == "camera":
+            if client.type == "camera" and client.offer:
                 cameras.append(
                     {
                         "id": client.id,

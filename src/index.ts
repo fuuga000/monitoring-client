@@ -10,7 +10,12 @@ export default class MonitoringClient {
   rtcConfig: object = {}
   constraints: object = { audio: false, video: true }
 
-  constructor(websocket_url: string, type: MonitoringType, rtcConfig: object = {}, constraints: object = {}) {
+  constructor(
+    websocket_url: string,
+    type: MonitoringType,
+    rtcConfig: object = {},
+    constraints: object = {}
+  ) {
     this.type = type
     Object.assign(this.rtcConfig, rtcConfig)
     Object.assign(this.constraints, constraints)
@@ -116,7 +121,6 @@ export default class MonitoringClient {
     const description = new RTCSessionDescription(camera.offer)
     await this.pc.setRemoteDescription(description)
     const answer = await this.pc.createAnswer()
-    await this.pc.setRemoteDescription(description)
     await this.pc.setLocalDescription(answer)
     await this.waitStatusComplete(this.pc)
     this.socket.sendJson({
